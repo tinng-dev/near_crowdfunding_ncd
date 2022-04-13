@@ -12,11 +12,15 @@ near call $ID new '{}' --accountId $ID
 ```
 ### new_project
 ```sh
-export CUR=date + %s
 // Create new job: job_creator.testnet
-near call $ID new_project '{"metadata": {"title": "Example", description": "https://abc.com", "target": "1000000000000000000000000000000", "minimum_deposit": "100000000000000000000000", "started_at": 11111111111111111, "ended_at": 4324324234234324234, "funded": "0", .....}}' --accountId job_creator.testnet --amount 1
+near call $ID new_project '{}' --accountId job_creator.testnet --amount 1
 ```
 ### support_project
 ```sh
-near call $I support_project '{"project_id": $PID}' --accountId job_worker.testnet --amount 2
+near call $ID support_project '{"project_id": "'$PID'"}' --accountId job_worker.testnet --amount 2
+```
+
+### get_claimable_amount
+```sh
+near view $ID get_claimable_amount '{"project_id": "'$PID'"}'
 ```

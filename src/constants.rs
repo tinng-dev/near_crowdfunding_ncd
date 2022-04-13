@@ -13,4 +13,5 @@ pub(crate) enum StorageKey {
     ProjectPerOwnerInner { id: AccountId },
     ProjectMetadata,
     SupportersPerProject,
+    SupporterPerProjectInner { id: AccountId },
 }
