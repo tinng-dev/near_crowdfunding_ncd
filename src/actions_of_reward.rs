@@ -10,6 +10,11 @@ impl Contract {
             .get(&project_id)
             .expect("Project doesn't exists!");
 
+        assert!(
+            !self.is_force_stop(project_id.clone()),
+            "The reward is forced stop by the community!!"
+        );
+
         let beneficiry = env::predecessor_account_id().into();
 
         let amount = self.get_claimable_amount(project_id.clone());
@@ -30,6 +35,7 @@ impl Contract {
     }
 
     //Calculate percent of each contributor after event ended
+    //TODO: Send reward back to supporters after project forced stop
 }
 
 #[ext_contract(ext_self)]

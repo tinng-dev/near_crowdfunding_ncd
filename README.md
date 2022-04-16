@@ -24,3 +24,15 @@ near call $ID support_project '{"project_id": "'$PID'"}' --accountId job_worker.
 ```sh
 near view $ID get_claimable_amount '{"project_id": "'$PID'"}'
 ```
+
+### claim_reward
+```sh
+near call $ID claim_reward '{"project_id": "'$PID'"}' --accountId job_worker.testnet 
+```
+
+//TODO: Force stop cases:
+//TODO: Create new project and call force_stop 
+```sh
+near call $ID force_stop '{"project_id": "'$PID'"}' --accountId job_worker.testnet 
+
+```

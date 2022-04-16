@@ -1,6 +1,13 @@
 use crate::*;
 use near_sdk::Duration;
 
+pub enum ProjectStatus {
+    NotStarted,
+    CrowdFunding,
+    Vesting,
+    Ended,
+}
+
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Project {
     pub owner_id: AccountId,
@@ -22,6 +29,7 @@ pub struct ProjectMetadata {
     pub vesting_end_time: Timestamp,
     pub vesting_interval: Duration,
     claimed: U128,
+    pub force_stop: Vec<AccountId>,
 }
 
 impl Default for ProjectMetadata {
@@ -38,6 +46,7 @@ impl Default for ProjectMetadata {
             vesting_end_time: env::block_timestamp() + 1_000_000_000 * 180, // 180 seconds
             vesting_interval: 1_000_000_000 * 30,                           // 30 seconds
             claimed: U128(0),
+            force_stop: vec![],
         }
     }
 }
@@ -61,15 +70,40 @@ impl Contract {
             } else {
                 let cur_intervals: u64 =
                     (current_ts - metadata.vesting_start_time) / metadata.vesting_interval;
-                let total_intervals: u64 = (metadata.vesting_end_time
-                    - metadata.vesting_start_time)
-                    / metadata.vesting_interval;
-
+                let total_intervals: u64 = self.get_number_of_miletones(project_id.clone());
                 u128::from(metadata.funded) / u128::from(total_intervals)
                     * u128::from(cur_intervals)
                     - u128::from(metadata.claimed)
             }
         };
+
+        //Check force_stop
+        if self.is_force_stop(project_id) {
+            return 0;
+        }
         claimable_amount
     }
+
+    pub fn is_force_stop(&self, project_id: ProjectId) -> bool {
+        if let Some(force_stop) = self.force_stop_project.get(&project_id.clone()) {
+            let supporters_len = self.supporters_per_project.get(&project_id).unwrap().len();
+            let force_stop_len = force_stop.len();
+
+            if force_stop_len > supporters_len / 2 {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn get_number_of_miletones(&self, project_id: ProjectId) -> u64 {
+        let metadata = self
+            .project_metadata
+            .get(&project_id)
+            .expect("Project doesn't exists!");
+
+        (metadata.vesting_end_time - metadata.vesting_start_time) / metadata.vesting_interval
+    }
+
+    pub fn get_project_status(&self, project_id: ProjectId) {}
 }

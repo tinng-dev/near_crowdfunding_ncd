@@ -2,7 +2,7 @@ use crate::*;
 
 #[near_bindgen]
 impl Contract {
-    //attach 1 Near to create a project
+    //attach 1 Near to create a project (services fee)
     #[payable]
     pub fn new_project(&mut self, metadata: Option<ProjectMetadata>) -> ProjectId {
         let owner: AccountId = env::predecessor_account_id().into();
