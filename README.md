@@ -32,6 +32,7 @@ near call $ID claim_reward '{"project_id": "'$PID'"}' --accountId job_worker.tes
 
 //TODO: Force stop cases:
 //TODO: Create new project and call force_stop 
+### force_stop
 ```sh
 near call $ID force_stop '{"project_id": "'$PID'"}' --accountId job_worker.testnet 
 
