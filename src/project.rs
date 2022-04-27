@@ -28,7 +28,7 @@ pub struct ProjectMetadata {
     pub vesting_start_time: Timestamp,
     pub vesting_end_time: Timestamp,
     pub vesting_interval: Duration,
-    claimed: U128,
+    pub claimed: U128,
     pub force_stop: Vec<AccountId>,
 }
 

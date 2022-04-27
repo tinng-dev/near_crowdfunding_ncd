@@ -50,7 +50,7 @@ impl Contract {
         match env::promise_result(0) {
             PromiseResult::Successful(_) => {
                 let mut metadata = self.project_metadata.get(&project_id).unwrap();
-                metadata.funded = U128::from(u128::from(metadata.funded) + amount);
+                metadata.claimed = U128::from(u128::from(metadata.claimed) + amount);
                 self.project_metadata.insert(&project_id, &metadata);
                 true
             }
