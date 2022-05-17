@@ -1,22 +1,24 @@
+use std::fs::metadata;
+
 use crate::*;
 
 #[near_bindgen]
 impl Contract {
     //attach 1 Near to create a project (services fee)
     #[payable]
-    pub fn new_project(&mut self, metadata: Option<ProjectMetadata>) -> ProjectId {
+    pub fn new_project(&mut self, mut metadata: ProjectMetadata) -> ProjectId {
         let owner: AccountId = env::predecessor_account_id().into();
         let project = Project {
             owner_id: owner.clone(),
         };
 
-        let mut metadata = {
-            if metadata.is_some() {
-                metadata.unwrap()
-            } else {
-                ProjectMetadata::default()
-            }
-        };
+        // let mut metadata = {
+        //     if metadata.is_some() {
+        //         metadata.unwrap()
+        //     } else {
+        //         ProjectMetadata::default()
+        //     }
+        // };
 
         assert!(
             env::attached_deposit() == NEAR_DECIMAL,
@@ -26,11 +28,6 @@ impl Contract {
         assert!(
             metadata.title.len() <= MAX_TITLE_LENGTH,
             "Title's too long!"
-        );
-
-        assert!(
-            valid_url(metadata.clone().description),
-            "Submit description as an ipfs url"
         );
 
         assert!(
@@ -61,16 +58,14 @@ impl Contract {
         );
 
         assert!(
-            valid_url(metadata.clone().description),
-            "Submit description as an ipfs url"
-        );
-
-        assert!(
             metadata.ended_at > env::block_timestamp(),
             "Endtime is not valid"
         );
 
-        metadata.started_at = env::block_timestamp();
+        // metadata.started_at = env::block_timestamp();
+        metadata.claimed = U128(0);
+        metadata.funded = U128(0);
+        metadata.force_stop = vec![];
 
         let project_id = gen_proj_id();
         self.project.insert(&project_id, &project);

@@ -1,5 +1,5 @@
 use crate::*;
-use near_sdk::Duration;
+use near_sdk::{json_types::ValidAccountId, CryptoHash, Duration};
 
 pub enum ProjectStatus {
     NotStarted,
@@ -36,7 +36,7 @@ impl Default for ProjectMetadata {
     fn default() -> Self {
         Self {
             title: "Default title".to_string(),
-            description: "https://app.pinata.cloud/pinmanager".to_string(),
+            description: "".to_string(),
             target: U128(NEAR_DECIMAL * 100),    //100 Near
             minimum_deposit: U128(NEAR_DECIMAL), //1 Near
             started_at: env::block_timestamp(),
@@ -54,6 +54,60 @@ impl Default for ProjectMetadata {
 #[near_bindgen]
 impl Contract {
     //TODO: implement view method for project
+    pub fn get_projects(&self, from_index: u64, limit: u64) -> Vec<(ProjectId, ProjectMetadata)> {
+        let keys = self.project_metadata.keys_as_vector();
+
+        let from = if keys.len() > (limit + from_index) {
+            keys.len() - limit - from_index
+        } else {
+            0
+        };
+
+        let to = if keys.len() > from_index {
+            keys.len() - from_index
+        } else {
+            0
+        };
+        (from..to)
+            .map(|index| {
+                let project_id = keys.get(index).unwrap();
+                (
+                    project_id.clone(),
+                    self.project_metadata.get(&project_id).unwrap(),
+                )
+            })
+            .rev()
+            .collect()
+    }
+
+    pub fn get_project(&self, project_id: ProjectId) -> ProjectMetadata {
+        self.project_metadata
+            .get(&project_id)
+            .expect("Project not found")
+    }
+
+    pub fn get_my_projects(
+        &self,
+        account_id: ValidAccountId,
+        from_index: u64,
+        limit: u64,
+    ) -> Vec<(ProjectId, ProjectMetadata)> {
+        if let Some(projects) = self.project_per_owner.get(&account_id.into()) {
+            let project_ids = projects.as_vector();
+            (from_index..std::cmp::min(from_index + limit, project_ids.len()))
+                .map(|index| {
+                    let project_id = project_ids.get(index).unwrap();
+                    (
+                        project_id.clone(),
+                        self.project_metadata.get(&project_id).unwrap(),
+                    )
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    }
+
     pub fn get_claimable_amount(&self, project_id: ProjectId) -> Balance {
         let current_ts = env::block_timestamp();
 
