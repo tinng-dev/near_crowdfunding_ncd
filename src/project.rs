@@ -1,5 +1,5 @@
 use crate::*;
-use near_sdk::Duration;
+use near_sdk::{json_types::ValidAccountId, Duration};
 
 pub enum ProjectStatus {
     NotStarted,
@@ -54,6 +54,47 @@ impl Default for ProjectMetadata {
 #[near_bindgen]
 impl Contract {
     //TODO: implement view method for project
+    pub fn get_projects(&self, from_index: u64, limit: u64) -> Vec<(ProjectId, ProjectMetadata)> {
+        let projects = self.project_metadata.keys_as_vector();
+        (from_index..std::cmp::min(from_index + limit, projects.len()))
+            .map(|index| {
+                let project_id = projects.get(index).unwrap();
+                (
+                    project_id.clone(),
+                    self.project_metadata.get(&project_id).unwrap(),
+                )
+            })
+            .collect()
+    }
+
+    pub fn get_project(&self, project_id: ProjectId) -> ProjectMetadata {
+        self.project_metadata
+            .get(&project_id)
+            .expect("Project not found")
+    }
+
+    pub fn get_my_projects(
+        &self,
+        account_id: ValidAccountId,
+        from_index: u64,
+        limit: u64,
+    ) -> Vec<(ProjectId, ProjectMetadata)> {
+        if let Some(projects) = self.project_per_owner.get(&account_id.into()) {
+            let project_ids = projects.as_vector();
+            (from_index..std::cmp::min(from_index + limit, project_ids.len()))
+                .map(|index| {
+                    let project_id = project_ids.get(index).unwrap();
+                    (
+                        project_id.clone(),
+                        self.project_metadata.get(&project_id).unwrap(),
+                    )
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    }
+
     pub fn get_claimable_amount(&self, project_id: ProjectId) -> Balance {
         let current_ts = env::block_timestamp();
 

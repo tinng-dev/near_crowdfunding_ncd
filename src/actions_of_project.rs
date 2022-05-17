@@ -1,3 +1,5 @@
+use std::fs::metadata;
+
 use crate::*;
 
 #[near_bindgen]
@@ -70,7 +72,10 @@ impl Contract {
             "Endtime is not valid"
         );
 
-        metadata.started_at = env::block_timestamp();
+        // metadata.started_at = env::block_timestamp();
+        metadata.claimed = U128(0);
+        metadata.funded = U128(0);
+        metadata.force_stop = vec![];
 
         let project_id = gen_proj_id();
         self.project.insert(&project_id, &project);
