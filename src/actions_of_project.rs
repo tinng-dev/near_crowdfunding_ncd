@@ -54,7 +54,6 @@ impl Contract {
 
         metadata.claimed = U128(0);
         metadata.funded = U128(0);
-        metadata.force_stop = vec![];
 
         let project_id = gen_proj_id();
         self.project.insert(&project_id, &project);

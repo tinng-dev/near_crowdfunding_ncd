@@ -29,7 +29,6 @@ pub struct ProjectMetadata {
     pub vesting_end_time: Timestamp,
     pub vesting_interval: Duration,
     pub claimed: U128,
-    pub force_stop: Vec<AccountId>,
     pub force_stop_ts: Option<u64>,
 }
 
@@ -47,7 +46,6 @@ impl Default for ProjectMetadata {
             vesting_end_time: env::block_timestamp() + 1_000_000_000 * 180, // 180 seconds
             vesting_interval: 1_000_000_000 * 30,                           // 30 seconds
             claimed: U128(0),
-            force_stop: vec![],
             force_stop_ts: None
         }
     }
@@ -175,6 +173,10 @@ impl Contract {
             .expect("Project doesn't exists!");
 
         (metadata.vesting_end_time - metadata.vesting_start_time) / metadata.vesting_interval
+    }
+
+    pub fn get_force_stop_accounts(&self, project_id: ProjectId) -> Vec<AccountId> {
+        self.force_stop_project.get(&project_id).expect("Project not found").to_vec()
     }
 
     pub fn get_project_status(&self, project_id: ProjectId) {}
