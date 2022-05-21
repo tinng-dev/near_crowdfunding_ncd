@@ -33,7 +33,7 @@ impl Contract {
         }
     }
 
-    pub fn claim_my_return(&mut self, project_id: ProjectId) -> U128 {
+    pub fn drawdown(&mut self, project_id: ProjectId) -> U128 {
         assert!(self.is_force_stop(project_id.clone()), "Project is running");
         //NOTE: Get remaining money 
         let project_metadata = self.project_metadata.get(&project_id).expect("Project not found");
