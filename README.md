@@ -6,7 +6,7 @@
 ## TODO
 - Implement DAO for each interval
 - admin fns to control this dapp
-- refund money to users 
+- Refund money to users 
 ### new
 ```sh
 near call $ID new '{}' --accountId $ID
