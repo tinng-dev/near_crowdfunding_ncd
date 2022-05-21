@@ -1,5 +1,3 @@
-use std::fs::metadata;
-
 use crate::*;
 
 #[near_bindgen]
@@ -7,18 +5,10 @@ impl Contract {
     //attach 1 Near to create a project (services fee)
     #[payable]
     pub fn new_project(&mut self, mut metadata: ProjectMetadata) -> ProjectId {
-        let owner: AccountId = env::predecessor_account_id().into();
+        let owner = env::predecessor_account_id();
         let project = Project {
             owner_id: owner.clone(),
         };
-
-        // let mut metadata = {
-        //     if metadata.is_some() {
-        //         metadata.unwrap()
-        //     } else {
-        //         ProjectMetadata::default()
-        //     }
-        // };
 
         assert!(
             env::attached_deposit() == NEAR_DECIMAL,
@@ -62,7 +52,6 @@ impl Contract {
             "Endtime is not valid"
         );
 
-        // metadata.started_at = env::block_timestamp();
         metadata.claimed = U128(0);
         metadata.funded = U128(0);
         metadata.force_stop = vec![];
@@ -111,7 +100,7 @@ impl Contract {
         self.project_metadata.insert(&project_id, &metadata);
 
         //Update balance of supporter
-        let supporter: AccountId = env::predecessor_account_id().into();
+        let supporter = env::predecessor_account_id();
         let mut supporters =
             self.supporters_per_project
                 .get(&project_id)
@@ -121,7 +110,7 @@ impl Contract {
 
         let mut my_balance = supporters.get(&supporter).unwrap_or(0_u128);
         my_balance += amount;
-        supporters.insert(&supporter.into(), &my_balance);
+        supporters.insert(&supporter, &my_balance);
         self.supporters_per_project.insert(&project_id, &supporters);
 
         my_balance

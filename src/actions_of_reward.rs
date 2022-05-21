@@ -10,19 +10,26 @@ impl Contract {
             .get(&project_id)
             .expect("Project doesn't exists!");
 
+        let timestamp = if self.is_force_stop(project_id.clone()) {
+            let project_metadata = self.project_metadata.get(&project_id).expect("Project not found");
+            project_metadata.force_stop_ts.unwrap()
+        } else {
+            env::block_timestamp()
+        };
+
         assert!(
             !self.is_force_stop(project_id.clone()),
             "The reward is forced stop by the community!!"
         );
 
-        let beneficiry = env::predecessor_account_id().into();
+        let beneficiary = env::predecessor_account_id();
 
         let amount = self.get_claimable_amount(project_id.clone());
         env::log(format!("Amount to claim = {}", amount).as_bytes());
 
         assert!(amount > 0, "There is nothing to claim at the moment");
 
-        Promise::new(beneficiry)
+        Promise::new(beneficiary)
             .transfer(amount)
             .then(ext_self::on_reward_transfer(
                 project_id,

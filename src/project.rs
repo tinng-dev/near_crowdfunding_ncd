@@ -30,6 +30,7 @@ pub struct ProjectMetadata {
     pub vesting_interval: Duration,
     pub claimed: U128,
     pub force_stop: Vec<AccountId>,
+    pub force_stop_ts: Option<u64>,
 }
 
 impl Default for ProjectMetadata {
@@ -47,7 +48,18 @@ impl Default for ProjectMetadata {
             vesting_interval: 1_000_000_000 * 30,                           // 30 seconds
             claimed: U128(0),
             force_stop: vec![],
+            force_stop_ts: None
         }
+    }
+}
+
+impl ProjectMetadata {
+    pub fn internal_get_funded(&self) -> u128 {
+        self.funded.into()
+    }
+
+    pub fn internal_get_claimed(&self) -> u128 {
+        self.claimed.into()
     }
 }
 
@@ -109,33 +121,31 @@ impl Contract {
     }
 
     pub fn get_claimable_amount(&self, project_id: ProjectId) -> Balance {
-        let current_ts = env::block_timestamp();
-
         let metadata = self
             .project_metadata
             .get(&project_id)
             .expect("Project doesn't exists!");
 
-        let claimable_amount = {
-            if current_ts < metadata.vesting_start_time {
+        let from_ts = if self.is_force_stop(project_id.clone()) {
+            metadata.force_stop_ts.unwrap()
+        } else {
+            env::block_timestamp()
+        };
+
+        {
+            if from_ts < metadata.vesting_start_time {
                 0
-            } else if current_ts >= metadata.vesting_end_time {
+            } else if from_ts >= metadata.vesting_end_time {
                 u128::from(metadata.funded) - u128::from(metadata.claimed)
             } else {
                 let cur_intervals: u64 =
-                    (current_ts - metadata.vesting_start_time) / metadata.vesting_interval;
+                    (from_ts - metadata.vesting_start_time) / metadata.vesting_interval;
                 let total_intervals: u64 = self.get_number_of_miletones(project_id.clone());
                 u128::from(metadata.funded) / u128::from(total_intervals)
                     * u128::from(cur_intervals)
                     - u128::from(metadata.claimed)
             }
-        };
-
-        //Check force_stop
-        if self.is_force_stop(project_id) {
-            return 0;
         }
-        claimable_amount
     }
 
     pub fn is_force_stop(&self, project_id: ProjectId) -> bool {
