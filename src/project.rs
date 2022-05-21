@@ -164,6 +164,10 @@ impl Contract {
         false
     }
 
+    pub fn get_supporters(&self, project_id: ProjectId) -> Vec<(AccountId, Balance)> {
+        self.supporters_per_project.get(&project_id).expect("Project not found").to_vec()
+    }
+
     pub fn get_number_of_miletones(&self, project_id: ProjectId) -> u64 {
         let metadata = self
             .project_metadata
