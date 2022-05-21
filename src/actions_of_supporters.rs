@@ -37,7 +37,7 @@ impl Contract {
         assert!(self.is_force_stop(project_id.clone()), "Project is running");
         //NOTE: Get remaining money 
         let project_metadata = self.project_metadata.get(&project_id).expect("Project not found");
-        let remaining_fund: Balance = project_metadata.internal_get_funded() - project_metadata.internal_get_claimed() - self.get_claimable_amount(project_id.clone());
+        let remaining_fund: Balance = project_metadata.internal_get_funded() - project_metadata.internal_get_claimed() - self.internal_get_claimable_amount(project_id.clone());
 
         let supporters = self
             .supporters_per_project

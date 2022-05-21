@@ -24,7 +24,7 @@ impl Contract {
 
         let beneficiary = env::predecessor_account_id();
 
-        let amount = self.get_claimable_amount(project_id.clone());
+        let amount = self.internal_get_claimable_amount(project_id.clone());
         env::log(format!("Amount to claim = {}", amount).as_bytes());
 
         assert!(amount > 0, "There is nothing to claim at the moment");

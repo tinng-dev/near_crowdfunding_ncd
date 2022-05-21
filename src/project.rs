@@ -120,11 +120,11 @@ impl Contract {
         }
     }
 
-    pub fn get_claimable_amount(&self, project_id: ProjectId) -> Balance {
+    pub fn internal_get_claimable_amount(&self, project_id: ProjectId) -> Balance {
         let metadata = self
             .project_metadata
             .get(&project_id)
-            .expect("Project doesn't exists!");
+            .expect("project doesn't exists!");
 
         let from_ts = if self.is_force_stop(project_id.clone()) {
             metadata.force_stop_ts.unwrap()
@@ -146,6 +146,10 @@ impl Contract {
                     - u128::from(metadata.claimed)
             }
         }
+    }
+
+    pub fn get_claimable_amount(&self, project_id: ProjectId) -> WrappedBalance{
+        U128::from(self.internal_get_claimable_amount(project_id))
     }
 
     pub fn is_force_stop(&self, project_id: ProjectId) -> bool {
