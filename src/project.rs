@@ -176,7 +176,7 @@ impl Contract {
     }
 
     pub fn get_force_stop_accounts(&self, project_id: ProjectId) -> Vec<AccountId> {
-        self.force_stop_project.get(&project_id).expect("Project not found").to_vec()
+        self.force_stop_project.get(&project_id).unwrap_or(return vec![]).to_vec()
     }
 
     pub fn get_project_status(&self, project_id: ProjectId) {}
