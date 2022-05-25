@@ -25,8 +25,6 @@ impl Contract {
             "Endtime is not valid"
         );
 
-        metadata.started_at = env::block_timestamp();
-
         let project_id = gen_proj_id();
         self.project.insert(&project_id, &project);
         self.project_metadata.insert(&project_id, &metadata);
@@ -40,17 +38,6 @@ impl Contract {
                 }));
         owner_projects.insert(&project_id);
         self.project_per_owner.insert(&owner, &owner_projects);
-
-        //TODO: assert metadata
-        assert!(
-            metadata.title.len() <= MAX_TITLE_LENGTH,
-            "Title's too long!"
-        );
-
-        assert!(
-            metadata.ended_at > env::block_timestamp(),
-            "Endtime is not valid"
-        );
 
         metadata.claimed = U128(0);
         metadata.funded = U128(0);
@@ -80,7 +67,6 @@ impl Contract {
             .project_metadata
             .get(&project_id)
             .expect("Project doesn't exist!");
-        let mut funded = u128::from(metadata.funded);
         let minimum_deposit = u128::from(metadata.minimum_deposit);
 
         assert!(
@@ -94,6 +80,7 @@ impl Contract {
             "Donation time is ended"
         );
 
+        let mut funded = u128::from(metadata.funded);
         funded += amount;
         metadata.funded = U128(funded);
         self.project_metadata.insert(&project_id, &metadata);
@@ -104,7 +91,7 @@ impl Contract {
             self.supporters_per_project
                 .get(&project_id)
                 .unwrap_or(UnorderedMap::new(StorageKey::SupporterPerProjectInner {
-                    id: supporter.clone(),
+                    id: project_id.clone(),
                 }));
 
         let mut my_balance = supporters.get(&supporter).unwrap_or(0_u128);
