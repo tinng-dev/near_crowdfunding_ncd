@@ -39,7 +39,7 @@ impl Contract {
         let project_metadata = self.project_metadata.get(&project_id).expect("Project not found");
         let remaining_fund: Balance = project_metadata.internal_get_funded() - project_metadata.internal_get_claimed() - self.internal_get_claimable_amount(project_id.clone());
 
-        let supporters = self
+        let mut supporters = self
             .supporters_per_project
             .get(&project_id.clone())
             .expect("Project not found");
@@ -47,6 +47,14 @@ impl Contract {
             .get(&env::predecessor_account_id())
             .expect("You are not a supporter!");
 
-        U128::from((my_invest / project_metadata.internal_get_funded()) * remaining_fund)
+        assert!(my_invest > 0, "You invest is Zero!!");
+
+        let amount = (my_invest / project_metadata.internal_get_funded()) * remaining_fund;
+
+        //Transfer to investor
+        Promise::new(env::predecessor_account_id()).transfer(amount);
+        supporters.insert(&env::predecessor_account_id(), &0);
+        self.supporters_per_project.insert(&project_id, &supporters);
+        U128::from(amount)
     }
 }

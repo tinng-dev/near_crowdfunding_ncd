@@ -1,4 +1,5 @@
 use crate::*;
+use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{json_types::ValidAccountId, CryptoHash, Duration};
 
 pub enum ProjectStatus {
@@ -8,9 +9,41 @@ pub enum ProjectStatus {
     Ended,
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+#[serde(tag = "type")]
+pub enum ProjectType {
+    Owned,
+    Supported,
+}
+
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Project {
     pub owner_id: AccountId,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[serde(crate = "near_sdk::serde")]
+#[serde(tag = "type")]
+pub enum ActionType {
+    CreateNewProject,
+    Support(U128),
+    Claim(U128),
+    ForceStop,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ProjectAction {
+    pub account_id: AccountId,
+    pub action: ActionType,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ProjectOwner {
+    pub project_id: ProjectId,
+    pub project_type: ProjectType,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -46,7 +79,7 @@ impl Default for ProjectMetadata {
             vesting_end_time: env::block_timestamp() + 1_000_000_000 * 180, // 180 seconds
             vesting_interval: 1_000_000_000 * 30,                           // 30 seconds
             claimed: U128(0),
-            force_stop_ts: None
+            force_stop_ts: None,
         }
     }
 }
@@ -101,15 +134,15 @@ impl Contract {
         account_id: ValidAccountId,
         from_index: u64,
         limit: u64,
-    ) -> Vec<(ProjectId, ProjectMetadata)> {
+    ) -> Vec<(ProjectOwner, ProjectMetadata)> {
         if let Some(projects) = self.project_per_owner.get(&account_id.into()) {
             let project_ids = projects.as_vector();
             (from_index..std::cmp::min(from_index + limit, project_ids.len()))
                 .map(|index| {
-                    let project_id = project_ids.get(index).unwrap();
+                    let project = project_ids.get(index).unwrap();
                     (
-                        project_id.clone(),
-                        self.project_metadata.get(&project_id).unwrap(),
+                        project.clone(),
+                        self.project_metadata.get(&project.project_id).unwrap(),
                     )
                 })
                 .collect()
@@ -146,7 +179,7 @@ impl Contract {
         }
     }
 
-    pub fn get_claimable_amount(&self, project_id: ProjectId) -> WrappedBalance{
+    pub fn get_claimable_amount(&self, project_id: ProjectId) -> WrappedBalance {
         U128::from(self.internal_get_claimable_amount(project_id))
     }
 
@@ -162,8 +195,13 @@ impl Contract {
         false
     }
 
-    pub fn get_supporters(&self, project_id: ProjectId) -> Vec<(AccountId, Balance)> {
-        self.supporters_per_project.get(&project_id).expect("Project not found").to_vec()
+    pub fn get_supporters(&self, project_id: ProjectId) -> Vec<(AccountId, WrappedBalance)> {
+        self.supporters_per_project
+            .get(&project_id)
+            .expect("Project not found")
+            .iter()
+            .map(|(account, balance)| (account, U128::from(balance)))
+            .collect()
     }
 
     pub fn get_number_of_miletones(&self, project_id: ProjectId) -> u64 {
@@ -176,7 +214,23 @@ impl Contract {
     }
 
     pub fn get_force_stop_accounts(&self, project_id: ProjectId) -> Vec<AccountId> {
-        self.force_stop_project.get(&project_id).unwrap_or(return vec![]).to_vec()
+        if let Some(accounts) = self.force_stop_project.get(&project_id) {
+            return accounts.to_vec();
+        }
+        vec![]
+    }
+
+    pub fn can_drawdown(&self, account_id: AccountId, project_id: ProjectId) -> bool {
+        if let Some(supporters) = self.supporters_per_project.get(&project_id) {
+            if let Some(amount) = supporters.get(&account_id) {
+                amount > 0
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+
     }
 
     pub fn get_project_status(&self, project_id: ProjectId) {}

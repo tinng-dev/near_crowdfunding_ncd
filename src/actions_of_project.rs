@@ -30,15 +30,6 @@ impl Contract {
         self.project_metadata.insert(&project_id, &metadata);
 
         //Add project to owner
-        let mut owner_projects =
-            self.project_per_owner
-                .get(&owner.clone())
-                .unwrap_or(UnorderedSet::new(StorageKey::ProjectPerOwnerInner {
-                    id: owner.clone(),
-                }));
-        owner_projects.insert(&project_id);
-        self.project_per_owner.insert(&owner, &owner_projects);
-
         metadata.claimed = U128(0);
         metadata.funded = U128(0);
 
@@ -53,7 +44,8 @@ impl Contract {
                 .unwrap_or(UnorderedSet::new(StorageKey::ProjectPerOwnerInner {
                     id: owner.clone(),
                 }));
-        owner_projects.insert(&project_id);
+
+        owner_projects.insert(&ProjectOwner { project_id: project_id.clone(), project_type: ProjectType::Owned });
         self.project_per_owner.insert(&owner, &owner_projects);
         project_id
     }
@@ -96,8 +88,18 @@ impl Contract {
 
         let mut my_balance = supporters.get(&supporter).unwrap_or(0_u128);
         my_balance += amount;
+
         supporters.insert(&supporter, &my_balance);
         self.supporters_per_project.insert(&project_id, &supporters);
+
+
+        let mut projects = self.project_per_owner
+                .get(&supporter.clone())
+                .unwrap_or(UnorderedSet::new(StorageKey::ProjectPerOwnerInner {
+                    id: supporter.clone(),
+                }));
+       projects.insert(&ProjectOwner { project_id, project_type: ProjectType::Supported});
+       self.project_per_owner.insert(&supporter, &projects);
 
         my_balance
     }

@@ -27,7 +27,7 @@ setup_alloc!();
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     pub owner_id: AccountId,
-    pub project_per_owner: LookupMap<AccountId, UnorderedSet<ProjectId>>,
+    pub project_per_owner: LookupMap<AccountId, UnorderedSet<ProjectOwner>>,
     pub project: LookupMap<ProjectId, Project>,
     pub project_metadata: UnorderedMap<ProjectId, ProjectMetadata>,
     pub supporters_per_project: LookupMap<ProjectId, UnorderedMap<AccountId, Balance>>,
